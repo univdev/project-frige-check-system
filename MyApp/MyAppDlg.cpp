@@ -311,11 +311,6 @@ afx_msg  LRESULT CMyAppDlg::OnMyBusRecvFrame(WPARAM wParam, LPARAM lParam)
 	Func = (lParam >> 24) & 0xff;
 	Addr = (lParam >> 16) & 0xff;
 
-	if ((Addr == VC_ADC1)) {
-		str.Format(_T("10"));
-		GetDlgItem(IDC_LIGHT)->SetWindowText(str);
-	}
-
 	if ((Func == FC_RIR) && (Addr == VC_ADC2)) {
 		i16Temp = lParam & 0xffff;
 
