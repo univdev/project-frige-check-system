@@ -304,10 +304,17 @@ afx_msg  LRESULT CMyAppDlg::OnMyBusRecvFrame(WPARAM wParam, LPARAM lParam)
 	UINT8 Addr;
 	INT16 i16Temp, i16SetTemp;
 	CString str;
+	UINT16 piezoTone = 988;
+	UINT16 piezoDuration = 1000;
 	float Temp;
 
 	Func = (lParam >> 24) & 0xff;
 	Addr = (lParam >> 16) & 0xff;
+
+	if ((Addr == VC_ADC1)) {
+		str.Format(_T("10"));
+		GetDlgItem(IDC_LIGHT)->SetWindowText(str);
+	}
 
 	if ((Func == FC_RIR) && (Addr == VC_ADC2)) {
 		i16Temp = lParam & 0xffff;
@@ -328,9 +335,12 @@ afx_msg  LRESULT CMyAppDlg::OnMyBusRecvFrame(WPARAM wParam, LPARAM lParam)
 		Query.ui8Addr = VC_PORTE;
 		Query.ui8DataH = BIT3;
 
+		updateFNDValue(i16Temp);
+
 		if (i16SetTemp < i16Temp) {
 			Query.ui8DataL = 0xff;
 			MyBusSendFrame(&Query);
+			playPiezo(piezoTone, piezoDuration);
 		}
 		else if (i16SetTemp > i16Temp) {
 			Query.ui8DataL = 0x00;
@@ -338,4 +348,41 @@ afx_msg  LRESULT CMyAppDlg::OnMyBusRecvFrame(WPARAM wParam, LPARAM lParam)
 		}
 	}
 	return afx_msg  LRESULT();
+}
+
+
+void CMyAppDlg::updateFNDValue(UINT ui32Value)
+{
+	// TODO: Add your implementation code here.
+	_MyBusFrame Query;
+
+	if (m_bConnected == FALSE) return;
+
+	Query.ui8Func = FC_WOR;
+	Query.ui8Addr = VC_FND;
+	Query.ui8DataH = (ui32Value >> 8) & 0xff;
+	Query.ui8DataL = ui32Value & 0xff;
+
+	MyBusSendFrame(&Query);
+}
+
+
+void CMyAppDlg::playPiezo(UINT16 ui16Freq, UINT16 ui16Duration)
+{
+	// TODO: Add your implementation code here.
+	_MyBusFrame Query;
+
+	UINT16 ui16Value;
+
+	if (m_bConnected == FALSE) return;
+
+	ui16Value = ui16Freq & 0x0fff; // 0 ~ 4.096KHz
+	ui16Value |= ((ui16Duration / 100) & 0x000f) << 12; // 0 ~ 1.6sec 
+														   // 200/200= 2(0.2ÃÊ Ãâ·Â)
+	Query.ui8Func = FC_WOR;
+	Query.ui8Addr = VC_PIEZO_TONE;
+	Query.ui8DataH = (ui16Value >> 8) & 0xff;
+	Query.ui8DataL = ui16Value & 0xff;
+
+	MyBusSendFrame(&Query);
 }

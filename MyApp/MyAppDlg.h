@@ -40,4 +40,6 @@ public:
 	bool m_bAutoCtrl;
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg  LRESULT OnMyBusRecvFrame(WPARAM wParam, LPARAM lParam);
+	void updateFNDValue(UINT ui32Value);
+	void playPiezo(UINT16 ui16Freq, UINT16 ui16Duration);
 };
