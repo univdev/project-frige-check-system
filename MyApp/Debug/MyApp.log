@@ -1,5 +1,6 @@
 ﻿  MyApp.cpp
   MyAppDlg.cpp
-c:\users\박찬영\documents\sources\project-frige-check-system\myapp\myappdlg.cpp(326): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\users\박찬영\documents\sources\project-frige-check-system\myapp\myappdlg.cpp(321): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
   Generating Code...
+  LINK : C:\Users\박찬영\Documents\sources\project-frige-check-system\Debug\MyApp.exe not found or not built by the last incremental link; performing full link
   MyApp.vcxproj -> C:\Users\박찬영\Documents\sources\project-frige-check-system\Debug\MyApp.exe
