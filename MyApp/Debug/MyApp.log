@@ -1,5 +1,5 @@
-﻿  stdafx.cpp
-  MyApp.cpp
+﻿  MyApp.cpp
   MyAppDlg.cpp
-  코드를 생성하고 있습니다...
-  MyApp.vcxproj -> G:\3.1 2019_VC++응용강의자료(2017버전)\VC_응용_2017버전\src\MyApp\Debug\MyApp.exe
+c:\users\박찬영\documents\sources\project-frige-check-system\myapp\myappdlg.cpp(319): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  Generating Code...
+  MyApp.vcxproj -> C:\Users\박찬영\Documents\sources\project-frige-check-system\Debug\MyApp.exe

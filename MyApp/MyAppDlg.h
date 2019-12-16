@@ -36,4 +36,8 @@ public:
 	afx_msg void OnBnClickedBtnCommConfig();
 	afx_msg void OnBnClickedBtnCommOpenClose();
 	afx_msg void OnClose();
+	afx_msg void OnBnClickedAuto();
+	bool m_bAutoCtrl;
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg  LRESULT OnMyBusRecvFrame(WPARAM wParam, LPARAM lParam);
 };

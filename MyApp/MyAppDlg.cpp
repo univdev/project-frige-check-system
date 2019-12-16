@@ -68,6 +68,9 @@ BEGIN_MESSAGE_MAP(CMyAppDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BTN_COMM_CONFIG, &CMyAppDlg::OnBnClickedBtnCommConfig)
 	ON_BN_CLICKED(IDC_BTN_COMM_OPEN_CLOSE, &CMyAppDlg::OnBnClickedBtnCommOpenClose)
 	ON_WM_CLOSE()
+	ON_BN_CLICKED(IDC_AUTO, &CMyAppDlg::OnBnClickedAuto)
+	ON_MESSAGE(WM_MYBUS_RECV_FRAME, &CMyAppDlg::OnMyBusRecvFrame)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -105,6 +108,8 @@ BOOL CMyAppDlg::OnInitDialog()
 	// TODO: 여기에 추가 초기화 작업을 추가합니다.
 	m_bConnected = FALSE;
 	m_hComm = NULL;
+
+	m_bAutoCtrl = FALSE;
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -232,4 +237,105 @@ void CMyAppDlg::OnClose()
 	}
 
 	CDialogEx::OnClose();
+}
+
+
+void CMyAppDlg::OnBnClickedAuto()
+{
+	// TODO: Add your control notification handler code here
+	_MyBusFrame Query;
+	BOOL static First = TRUE;
+
+	if (m_bConnected == TRUE) {
+		if (First == TRUE) {
+			First = FALSE;
+			// ADC 활성화
+			Query.ui8Func = FC_WOR;
+			Query.ui8Addr = VC_ADC_INTERVAL;
+			Query.ui8DataH = 500 >> 8;
+			Query.ui8DataL = 500 & 0xff;
+			MyBusSendFrame(&Query);
+			// Motor Off
+			Query.ui8Func = FC_WOP;
+			Query.ui8Addr = VC_PORTE;
+			Query.ui8DataH = BIT3;
+			Query.ui8DataL = 0x00;
+			MyBusSendFrame(&Query);
+			// Motor Port Enable
+			Query.ui8Func = FC_WOP;
+			Query.ui8Addr = VC_DDRE;
+			Query.ui8DataH = BIT3;
+			Query.ui8DataL = 0xff;
+			MyBusSendFrame(&Query);
+		}
+		if (m_bAutoCtrl == FALSE) {
+			SetTimer(0, 500, NULL);
+			m_bAutoCtrl = TRUE;
+			GetDlgItem(IDC_AUTO)->SetWindowText(_T("자동제어Off"));
+		} else {
+			KillTimer(0);
+			m_bAutoCtrl = FALSE;
+			GetDlgItem(IDC_AUTO)->SetWindowText(_T("자동제어On"));
+		}
+	} //first-if
+}
+
+void CMyAppDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: Add your message handler code here and/or call default
+	_MyBusFrame Query;
+	// 현재온도 요청
+	if (m_bConnected == TRUE) {
+		Query.ui8Func = FC_RIR;
+		Query.ui8Addr = VC_ADC2;
+		MyBusSendFrame(&Query);
+	}
+
+	CDialogEx::OnTimer(nIDEvent);
+}
+
+
+afx_msg  LRESULT CMyAppDlg::OnMyBusRecvFrame(WPARAM wParam, LPARAM lParam)
+{
+	// TODO: Add your implementation code here.
+	BOOL static bMotorRun = FALSE;
+	_MyBusFrame Query;
+	UINT8 Func;
+	UINT8 Addr;
+	INT16 i16Temp, i16SetTemp;
+	CString str;
+	float Temp;
+
+	Func = (lParam >> 24) & 0xff;
+	Addr = (lParam >> 16) & 0xff;
+
+	if ((Func == FC_RIR) && (Addr == VC_ADC2)) {
+		i16Temp = lParam & 0xffff;
+
+		// 10비트 ADC의 STEP당 전압 2.5mV(2.5E-3)
+		// MCP9700A의 0℃일 때 출력전압 500mV, 
+		// MCP9700A의 온도당 출력전압 10mV/1℃
+
+		Temp = ((float)i16Temp * 2.5E-3 - 0.5) / 10.0E-3;
+		i16Temp = (INT16)Temp;
+		str.Format(_T("%d"), (int)Temp);
+		GetDlgItem(IDC_CURR_TEMP)->SetWindowText(str);
+
+		// 설정온도 읽기
+		i16SetTemp = GetDlgItemInt(IDC_SET_TEMP);
+
+		Query.ui8Func = FC_WOP;
+		Query.ui8Addr = VC_PORTE;
+		Query.ui8DataH = BIT3;
+
+		if (i16SetTemp < i16Temp) {
+			Query.ui8DataL = 0xff;
+			MyBusSendFrame(&Query);
+		}
+		else if (i16SetTemp > i16Temp) {
+			Query.ui8DataL = 0x00;
+			MyBusSendFrame(&Query);
+		}
+	}
+	return afx_msg  LRESULT();
 }
